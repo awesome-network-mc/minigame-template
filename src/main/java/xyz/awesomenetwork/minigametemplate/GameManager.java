@@ -48,10 +48,6 @@ public class GameManager {
         startReminderChatMessages();
     }
 
-    private void sendTitleToAllPlayers(String title) {
-        plugin.getServer().getOnlinePlayers().forEach(player -> player.sendTitle(title, "", 0, 25, 5));
-    }
-
     private boolean hasRepeatingTask(GameState gameState) {
         return repeatingTasks.containsKey(gameState);
     }
@@ -121,21 +117,33 @@ public class GameManager {
         setRepeatingTask(GameState.COUNTDOWN, plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             if (inGamePlayers.size() < options.minStartPlayers) {
                 cancelRepeatingTask(GameState.COUNTDOWN);
-                sendTitleToAllPlayers(MinigameTemplate.PREFIX_ERROR + "Not enough players to start");
+                for (Player player : plugin.getServer().getOnlinePlayers()) {
+                    player.setLevel(0);
+                    player.setExp(0f);
+                    player.sendTitle(MinigameTemplate.PREFIX_ERROR + "Not enough players to start", "", 0, 25, 5);
+                }
                 startReminderChatMessages();
                 return;
             }
 
             long timeRemaining = options.gameStartCountdownSeconds - (Instant.now().getEpochSecond() - countdownStart);
 
+            final boolean showTitle = COUNTDOWN_TITLE_NUMBERS.containsKey((int) timeRemaining);
+            final float exp = 0.99f / options.gameStartCountdownSeconds * timeRemaining;
+            for (Player player : plugin.getServer().getOnlinePlayers()) {
+                player.setLevel((int) timeRemaining);
+                player.setExp(exp);
+
+                if (!showTitle) continue;
+                String title = COUNTDOWN_TITLE_NUMBERS.get((int) timeRemaining);
+                player.sendTitle(title, "", 0, 25, 5);
+            }
+
             if (timeRemaining <= 0) {
                 cancelRepeatingTask(GameState.COUNTDOWN);
                 startGame();
                 return;
             }
-            if (!COUNTDOWN_TITLE_NUMBERS.containsKey((int) timeRemaining)) return;
-
-            sendTitleToAllPlayers(COUNTDOWN_TITLE_NUMBERS.get((int) timeRemaining));
         }, 0, 20));
 
         return true;
