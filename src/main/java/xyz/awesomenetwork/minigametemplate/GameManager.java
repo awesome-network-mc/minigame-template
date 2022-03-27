@@ -16,6 +16,8 @@ public class GameManager {
 
     private final HashMap<Integer, String> COUNTDOWN_TITLE_NUMBERS = new HashMap<Integer, String>() {{
         put(60, "Starting in 60 seconds");
+        put(50, "Starting in 50 seconds");
+        put(40, "Starting in 40 seconds");
         put(30, "Starting in 30 seconds");
         put(20, "Starting in 20 seconds");
         put(10, "❿");
