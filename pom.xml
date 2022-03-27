@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>cool.domsgames</groupId>
+    <groupId>xyz.awesomenetwork</groupId>
     <artifactId>minigametemplate</artifactId>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -21,6 +21,14 @@
             </resource>
         </resources>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>github</id>
+            <name>minigame-template</name>
+            <url>https://maven.pkg.github.com/awesome-network-mc/minigame-template</url>
+        </repository>
+    </distributionManagement>
 
     <repositories>
         <repository>
@@ -37,5 +45,4 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
-
 </project>
