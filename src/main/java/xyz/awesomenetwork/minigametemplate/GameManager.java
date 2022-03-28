@@ -5,7 +5,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import xyz.awesomenetwork.minigametemplate.enums.GameState;
+import xyz.awesomenetwork.minigametemplate.events.GameCountdownEvent;
 import xyz.awesomenetwork.minigametemplate.events.GameEndEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerJoinEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerLeaveEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerSpectateEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerUnspectateEvent;
 import xyz.awesomenetwork.minigametemplate.events.GameRunningTimeEvent;
 
 import java.time.Instant;
@@ -77,19 +82,30 @@ public class GameManager {
         removePlayer(player);
 
         boolean addedToGame = inGamePlayers.add(player);
-        if (addedToGame) startGameCountdown();
+        if (addedToGame) {
+            plugin.getServer().getPluginManager().callEvent(new GamePlayerJoinEvent(player, inGamePlayers.size()));
+            startGameCountdown();
+        }
 
         return addedToGame;
     }
 
     public boolean setPlayerSpectating(Player player) {
         removePlayer(player);
-        return spectatingPlayers.add(player);
+        boolean spectating = spectatingPlayers.add(player);
+        if (spectating) plugin.getServer().getPluginManager().callEvent(new GamePlayerSpectateEvent(player, spectatingPlayers.size()));
+        return spectating;
     }
 
     public boolean removePlayer(Player player) {
-        if (inGamePlayers.remove(player)) return true;
-        if (spectatingPlayers.remove(player)) return true;
+        if (inGamePlayers.remove(player)) {
+            plugin.getServer().getPluginManager().callEvent(new GamePlayerLeaveEvent(player, inGamePlayers.size()));
+            return true;
+        }
+        if (spectatingPlayers.remove(player)) {
+            plugin.getServer().getPluginManager().callEvent(new GamePlayerUnspectateEvent(player, spectatingPlayers.size()));
+            return true;
+        }
         return false;
     }
 
@@ -127,6 +143,7 @@ public class GameManager {
             }
 
             long timeRemaining = options.gameStartCountdownSeconds - (Instant.now().getEpochSecond() - countdownStart);
+            plugin.getServer().getPluginManager().callEvent(new GameCountdownEvent(timeRemaining));
 
             final boolean showTitle = COUNTDOWN_TITLE_NUMBERS.containsKey((int) timeRemaining);
             final float exp = 0.99f / options.gameStartCountdownSeconds * timeRemaining;
