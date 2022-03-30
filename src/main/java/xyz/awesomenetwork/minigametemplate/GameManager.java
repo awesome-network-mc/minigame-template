@@ -12,6 +12,7 @@ import xyz.awesomenetwork.minigametemplate.events.GamePlayerLeaveEvent;
 import xyz.awesomenetwork.minigametemplate.events.GamePlayerSpectateEvent;
 import xyz.awesomenetwork.minigametemplate.events.GamePlayerUnspectateEvent;
 import xyz.awesomenetwork.minigametemplate.events.GameRunningTimeEvent;
+import xyz.awesomenetwork.minigametemplate.events.GameStartEvent;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -170,6 +171,8 @@ public class GameManager {
         gameState = GameState.STARTED;
 
         long gameStart = Instant.now().getEpochSecond();
+
+        plugin.getServer().getPluginManager().callEvent(new GameStartEvent());
 
         setRepeatingTask(GameState.STARTED, plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             if (gameState == GameState.ENDED) {
