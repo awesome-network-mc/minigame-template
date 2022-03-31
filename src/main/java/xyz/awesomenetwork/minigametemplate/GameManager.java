@@ -85,6 +85,8 @@ public class GameManager {
         boolean addedToGame = inGamePlayers.add(player);
         if (addedToGame) {
             plugin.getServer().getPluginManager().callEvent(new GamePlayerJoinEvent(player, inGamePlayers.size()));
+            player.setLevel(0);
+            player.setExp(0f);
             startGameCountdown();
         }
 
