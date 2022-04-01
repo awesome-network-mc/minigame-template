@@ -78,6 +78,8 @@ public class PlayerDeathListener implements Listener {
             if (options.displayDeathMessages) e.setDeathMessage(ChatColor.RED + "✖ " + victimName + ChatColor.RED + " died");
         }
 
+        victim.spigot().respawn();
+        
         if (options.autoRespawn) {
             long timerStart = Instant.now().getEpochSecond();
 
@@ -114,7 +116,6 @@ public class PlayerDeathListener implements Listener {
              victim.sendTitle(title, ChatColor.GRAY + "Your life lasted " + aliveTime, 10, 100, 10);
 
             if (options.autoSpectateOnDeath) {
-                victim.setHealth(20.0);
                 gameManager.setPlayerSpectating(victim);
             }
         }
