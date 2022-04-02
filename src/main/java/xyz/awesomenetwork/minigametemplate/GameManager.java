@@ -2,8 +2,10 @@ package xyz.awesomenetwork.minigametemplate;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import xyz.awesomenetwork.minigametemplate.enums.GameMetadata;
 import xyz.awesomenetwork.minigametemplate.enums.GameState;
 import xyz.awesomenetwork.minigametemplate.events.GameCountdownEvent;
 import xyz.awesomenetwork.minigametemplate.events.GameEndEvent;
@@ -173,6 +175,11 @@ public class GameManager {
         gameState = GameState.STARTED;
 
         long gameStart = Instant.now().getEpochSecond();
+
+        FixedMetadataValue lifeStartSecondsMetadata = new FixedMetadataValue(plugin, gameStart);
+        inGamePlayers.forEach(player -> {
+            player.setMetadata(GameMetadata.LIFE_START_SECONDS.name(), lifeStartSecondsMetadata);
+        });
 
         plugin.getServer().getPluginManager().callEvent(new GameStartEvent());
 

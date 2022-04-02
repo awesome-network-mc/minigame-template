@@ -102,7 +102,7 @@ public class PlayerDeathListener implements Listener {
 
             }, 0, 20);
         } else {
-            long seconds = victim.getMetadata(GameMetadata.LIFE_START_SECONDS.name()).get(0).asLong();
+            long seconds = Instant.now().getEpochSecond() - victim.getMetadata(GameMetadata.LIFE_START_SECONDS.name()).get(0).asLong();
             long hours = seconds / 3600;
             seconds -= hours * 3600;
             long minutes = seconds / 60;
