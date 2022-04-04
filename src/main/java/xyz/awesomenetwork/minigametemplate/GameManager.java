@@ -282,6 +282,7 @@ public class GameManager {
             World world = player.getWorld();
             Location location = player.getLocation();
             for (ItemStack item : player.getInventory().getContents()) {
+                if (item == null) continue;
                 world.dropItemNaturally(location, item);
             }
         }
