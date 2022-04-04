@@ -1,8 +1,9 @@
 package xyz.awesomenetwork.minigametemplate;
 
 public class GameManagerOptions {
-    public final boolean joinStartedGame, autoSpectateOnDeath, autoRespawn, displayDeathMessages;
-    public final int maxGameTimeSeconds, maxPlayers, minStartPlayers, gameEndTimeSeconds, autoRespawnTimerSeconds, combatTagTimeSeconds, gameStartCountdownSeconds;
+    public final boolean joinStartedGame, autoSpectateOnDeath, autoRespawn, displayDeathMessages, dropItemsOnDeath;
+    public final int maxGameTimeSeconds, maxPlayers, minStartPlayers, gameEndTimeSeconds, autoRespawnTimerSeconds, gameStartCountdownSeconds;
+    public final long combatTagTimeTicks;
 
     public GameManagerOptions(GameManagerOptionsBuilder options) {
         this.joinStartedGame = options.joinStartedGame;
@@ -14,8 +15,9 @@ public class GameManagerOptions {
         this.minStartPlayers = options.minStartPlayers;
         this.gameEndTimeSeconds = options.gameEndTimeSeconds;
         this.autoRespawnTimerSeconds = options.autoRespawnTimerSeconds;
-        this.combatTagTimeSeconds = options.combatTagTimeSeconds;
+        this.combatTagTimeTicks = options.combatTagTimeTicks;
         this.gameStartCountdownSeconds = options.gameStartCountdownSeconds;
+        this.dropItemsOnDeath = options.dropItemsOnDeath;
     }
 
     public static class GameManagerOptionsBuilder {
@@ -28,8 +30,9 @@ public class GameManagerOptions {
         private int minStartPlayers = 2;
         private int gameEndTimeSeconds = 10;
         private int autoRespawnTimerSeconds = 5;
-        private int combatTagTimeSeconds = 5;
+        private long combatTagTimeTicks = 100; // 5 seconds
         private int gameStartCountdownSeconds = 60;
+        private boolean dropItemsOnDeath = true;
 
         public GameManagerOptionsBuilder canJoinStartedGame(boolean joinStartedGame) {
             this.joinStartedGame = joinStartedGame;
@@ -76,13 +79,18 @@ public class GameManagerOptions {
             return this;
         }
 
-        public GameManagerOptionsBuilder combatTagTimeSeconds(int combatTagTimeSeconds) {
-            this.combatTagTimeSeconds = combatTagTimeSeconds;
+        public GameManagerOptionsBuilder combatTagTimeSeconds(int combatTagTimeTicks) {
+            this.combatTagTimeTicks = combatTagTimeTicks;
             return this;
         }
 
         public GameManagerOptionsBuilder gameStartCountdownTimeSeconds(int gameStartCountdownSeconds) {
             this.gameStartCountdownSeconds = gameStartCountdownSeconds;
+            return this;
+        }
+
+        public GameManagerOptionsBuilder dropItemsOnDeath(boolean dropItemsOnDeath) {
+            this.dropItemsOnDeath = dropItemsOnDeath;
             return this;
         }
 

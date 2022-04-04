@@ -5,6 +5,7 @@ import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import xyz.awesomenetwork.minigametemplate.combattag.CombatTagUtil;
 import xyz.awesomenetwork.minigametemplate.listeners.*;
 
 public class MinigameTemplate extends JavaPlugin {
@@ -25,13 +26,13 @@ public class MinigameTemplate extends JavaPlugin {
     }
 
     public GameManager createGameManager(GameManagerOptions options) {
-        GameManager gameManager = new GameManager(this, options);
+        CombatTagUtil combatTagUtil = new CombatTagUtil(options.combatTagTimeTicks);
+        GameManager gameManager = new GameManager(this, options, combatTagUtil);
 
         final PluginManager pm = getServer().getPluginManager();
 
         pm.registerEvents(new EntityDamageByEntityListener(this), this);
         pm.registerEvents(new EntityDamageListener(gameManager), this);
-        pm.registerEvents(new PlayerDeathListener(this, gameManager), this);
         pm.registerEvents(new PlayerJoinListener(gameManager), this);
         pm.registerEvents(new PlayerQuitListener(gameManager), this);
 

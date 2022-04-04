@@ -3,14 +3,14 @@ package xyz.awesomenetwork.minigametemplate.events;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 
-public class GamePlayerDamageEvent extends BaseEvent implements Cancellable {
+public class GamePlayerPvpDamageEvent extends BaseEvent implements Cancellable {
 
     private final Player attacker, victim;
     private final double damage;
 
     private boolean cancelled = false;
 
-    public GamePlayerDamageEvent(Player attacker, Player victim, double damage) {
+    public GamePlayerPvpDamageEvent(Player attacker, Player victim, double damage) {
         this.attacker = attacker;
         this.victim = victim;
         this.damage = damage;
