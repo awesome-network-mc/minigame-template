@@ -269,6 +269,7 @@ public class GameManager {
 
         String title;
         String deathMessage = null;
+        String victimName = ChatColor.WHITE + player.getName();
         CombatTagInfo combatInfo = combatTagUtil.getPlayerCombatTag(player);
         if (combatInfo != null) {
             ChatColor heartColour = ChatColor.DARK_RED;
@@ -278,10 +279,10 @@ public class GameManager {
 
             String attackerName = ChatColor.WHITE + combatInfo.getUsername();
             title = attackerName + " " + heartColour + (Math.round(combatInfo.getHealth() * 10.0) / 10) + "❤ " + ChatColor.RED + "killed you!";
-            deathMessage = ChatColor.RED + "✖ " + player.getName() + ChatColor.RED + " was killed by " + attackerName + " " + heartColour + (Math.round(combatInfo.getHealth() * 10.0) / 10) + "❤";
+            deathMessage = ChatColor.RED + "✖ " + victimName + ChatColor.RED + " was killed by " + attackerName + " " + heartColour + (Math.round(combatInfo.getHealth() * 10.0) / 10) + "❤";
         } else {
             title = ChatColor.RED + "You died!";
-            deathMessage = ChatColor.RED + "✖ " + player.getName() + ChatColor.RED + " died";
+            deathMessage = ChatColor.RED + "✖ " + victimName + ChatColor.RED + " died";
         }
 
         if (options.displayDeathMessages) plugin.getServer().broadcastMessage(deathMessage);
