@@ -25,7 +25,7 @@ public class EntityDamageListener implements Listener {
         Player victim = (Player) e.getEntity();
 
         // Is victim dead?
-        if (victim.getHealth() > 0.0) return;
+        if (victim.getHealth() - e.getFinalDamage() > 0.0) return;
 
         gameManager.handlePlayerDeath(victim);
     }
