@@ -59,6 +59,9 @@ public class GameManager {
     private final HashMap<GameState, Integer> repeatingTasks = new HashMap<>();
     private final HashMap<Player, Integer> respawnTaskIds = new HashMap<>();
 
+    private long gameStart = 0;
+    private long gameTimer = 0;
+
     public GameManager(JavaPlugin plugin, GameManagerOptions options, CombatTagUtil combatTagUtil) {
         this.plugin = plugin;
         this.options = options;
@@ -204,7 +207,7 @@ public class GameManager {
     public void startGame() {
         gameState = GameState.STARTED;
 
-        long gameStart = Instant.now().getEpochSecond();
+        gameStart = Instant.now().getEpochSecond();
 
         FixedMetadataValue lifeStartSecondsMetadata = new FixedMetadataValue(plugin, gameStart);
         inGamePlayers.forEach(player -> {
@@ -219,8 +222,8 @@ public class GameManager {
                 return;
             }
 
-            long gameRunningTimeSeconds = Instant.now().getEpochSecond() - gameStart;
-            plugin.getServer().getPluginManager().callEvent(new GameRunningTimeEvent(gameRunningTimeSeconds));
+            gameTimer = Instant.now().getEpochSecond() - gameStart;
+            plugin.getServer().getPluginManager().callEvent(new GameRunningTimeEvent(gameTimer));
 
             if (inGamePlayers.size() < options.minStartPlayers) {
                 cancelRepeatingTask(GameState.STARTED);
@@ -229,7 +232,7 @@ public class GameManager {
             }
 
             if (options.maxGameTimeSeconds <= 0) return;
-            if (gameRunningTimeSeconds >= options.maxGameTimeSeconds) endGame();
+            if (gameTimer >= options.maxGameTimeSeconds) endGame();
         }, 0, 20));
     }
 
@@ -337,5 +340,9 @@ public class GameManager {
                 setPlayerSpectating(player);
             }
         }
+    }
+
+    public long getGameRunningTimeInSeconds() {
+        return gameTimer;
     }
 }
