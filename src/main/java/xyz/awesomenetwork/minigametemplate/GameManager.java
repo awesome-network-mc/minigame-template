@@ -46,6 +46,7 @@ public class GameManager {
         put(2, ChatColor.DARK_AQUA + "❷");
         put(1, ChatColor.BLUE + "❶");
     }};
+    private final FixedMetadataValue playerDeathMetadata;
 
     private final JavaPlugin plugin;
     private final GameManagerOptions options;
@@ -62,6 +63,8 @@ public class GameManager {
         this.plugin = plugin;
         this.options = options;
         this.combatTagUtil = combatTagUtil;
+
+        playerDeathMetadata = new FixedMetadataValue(plugin, 1);
 
         startReminderChatMessages();
     }
@@ -257,6 +260,9 @@ public class GameManager {
     }
 
     public void handlePlayerDeath(Player player) {
+        if (player.hasMetadata(GameMetadata.PLAYER_DEATH.name())) return;
+        player.setMetadata(GameMetadata.PLAYER_DEATH.name(), playerDeathMetadata);
+
         player.setHealth(20.0);
 
         String title;
@@ -301,7 +307,8 @@ public class GameManager {
                 }
 
                 if (secondsRemaining == 0) {
-                    plugin.getServer().getPluginManager().callEvent(new GamePlayerRespawnEvent(player));;
+                    player.removeMetadata(GameMetadata.PLAYER_DEATH.name(), plugin);
+                    plugin.getServer().getPluginManager().callEvent(new GamePlayerRespawnEvent(player));
                     cancelPlayerRespawnTask(player);
                     return;
                 }
