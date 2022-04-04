@@ -126,10 +126,12 @@ public class GameManager {
 
     public boolean removePlayer(Player player) {
         if (inGamePlayers.remove(player)) {
-            // Check whether player was in combat
-            CombatTagInfo combatTag = combatTagUtil.getPlayerCombatTag(player);
-            if (combatTag != null) {
-                handlePlayerDeath(player);
+            // Check whether player was in combat (only if the game is running, or else when the server stops it will kill people)
+            if (getGameState() == GameState.STARTED) {
+                CombatTagInfo combatTag = combatTagUtil.getPlayerCombatTag(player);
+                if (combatTag != null) {
+                    handlePlayerDeath(player);
+                }
             }
 
             plugin.getServer().getPluginManager().callEvent(new GamePlayerLeaveEvent(player, inGamePlayers.size()));
