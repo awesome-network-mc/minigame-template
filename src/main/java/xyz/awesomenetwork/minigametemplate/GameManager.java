@@ -288,8 +288,6 @@ public class GameManager {
             deathMessage = ChatColor.RED + "✖ " + victimName + ChatColor.RED + " died";
         }
 
-        if (options.displayDeathMessages) plugin.getServer().broadcastMessage(deathMessage);
-
         if (options.dropItemsOnDeath) {
             World world = player.getWorld();
             Location location = player.getLocation();
@@ -299,7 +297,10 @@ public class GameManager {
             }
         }
 
-        plugin.getServer().getPluginManager().callEvent(new GamePlayerDeathEvent(player));
+        GamePlayerDeathEvent deathEvent = new GamePlayerDeathEvent(player, deathMessage, combatInfo);
+        plugin.getServer().getPluginManager().callEvent(deathEvent);
+        
+        if (options.displayDeathMessages && deathEvent.hasDeathMessage()) plugin.getServer().broadcastMessage(deathEvent.getDeathMessage());
 
         if (options.autoRespawn) {
             long timerStart = Instant.now().getEpochSecond();

@@ -15,12 +15,13 @@ public class GamePlayerDeathEvent extends BaseEvent {
     private String deathMessage = "";
     private List<ItemStack> victimDrops = new ArrayList<>();
 
-    public GamePlayerDeathEvent(Player victim) {
-        this(victim, null);
+    public GamePlayerDeathEvent(Player victim, String deathMessage) {
+        this(victim, deathMessage, null);
     }
 
-    public GamePlayerDeathEvent(Player victim, CombatTagInfo combatTag) {
+    public GamePlayerDeathEvent(Player victim, String deathMessage, CombatTagInfo combatTag) {
         this.victim = victim;
+        this.deathMessage = deathMessage;
         this.combatTag = combatTag;
 
         for (ItemStack item : victim.getInventory().getContents()) {
@@ -46,6 +47,10 @@ public class GamePlayerDeathEvent extends BaseEvent {
 
     public void setVictimItemDrops(List<ItemStack> victimDrops) {
         this.victimDrops = victimDrops;
+    }
+
+    public boolean hasDeathMessage() {
+        return deathMessage != null;
     }
 
     public String getDeathMessage() {
