@@ -345,4 +345,12 @@ public class GameManager {
     public long getGameRunningTimeInSeconds() {
         return gameTimer;
     }
+
+    public HashSet<Player> getIngamePlayers() {
+        return this.inGamePlayers;
+    }
+
+    public HashSet<Player> getSpectatingPlayers() {
+        return this.spectatingPlayers;
+    }
 }
