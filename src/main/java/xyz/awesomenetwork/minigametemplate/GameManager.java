@@ -299,7 +299,10 @@ public class GameManager {
             }
         }
 
-        plugin.getServer().getPluginManager().callEvent(new GamePlayerDeathEvent(player));
+        GamePlayerDeathEvent deathEvent = new GamePlayerDeathEvent(player, deathMessage, combatInfo);
+        plugin.getServer().getPluginManager().callEvent(deathEvent);
+        
+        if (options.displayDeathMessages && deathEvent.hasDeathMessage()) plugin.getServer().broadcastMessage(deathMessage);
 
         if (options.autoRespawn) {
             long timerStart = Instant.now().getEpochSecond();
