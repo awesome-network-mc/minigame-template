@@ -288,8 +288,6 @@ public class GameManager {
             deathMessage = ChatColor.RED + "✖ " + victimName + ChatColor.RED + " died";
         }
 
-        if (options.displayDeathMessages) plugin.getServer().broadcastMessage(deathMessage);
-
         if (options.dropItemsOnDeath) {
             World world = player.getWorld();
             Location location = player.getLocation();
