@@ -257,7 +257,7 @@ public class GameManager {
 				cancelRepeatingTask(GameState.ENDED);
 
 				plugin.getServer().getOnlinePlayers().forEach(player -> {
-					player.kickPlayer("this is where you'd be send to lobby");
+					player.kickPlayer("Server restarting");
 				});
 
 				plugin.getServer().shutdown();
