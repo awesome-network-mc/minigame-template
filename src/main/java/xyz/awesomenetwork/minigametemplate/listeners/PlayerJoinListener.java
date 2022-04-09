@@ -8,19 +8,19 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import xyz.awesomenetwork.minigametemplate.GameManager;
 
 public class PlayerJoinListener implements Listener {
-    private final GameManager gameManager;
+	private final GameManager gameManager;
 
-    public PlayerJoinListener(GameManager gameManager) {
-        this.gameManager = gameManager;
-    }
+	public PlayerJoinListener(GameManager gameManager) {
+		this.gameManager = gameManager;
+	}
 
-    @EventHandler
-    public void playerJoin(PlayerJoinEvent e) {
-        final Player player = e.getPlayer();
+	@EventHandler
+	public void playerJoin(PlayerJoinEvent e) {
+		final Player player = e.getPlayer();
 
-        if (gameManager.setPlayerInGame(player)) return;
-        if (gameManager.setPlayerSpectating(player)) return;
+		if (gameManager.setPlayerInGame(player)) return;
+		if (gameManager.setPlayerSpectating(player)) return;
 
-        e.getPlayer().kickPlayer("An unknown error occurred while joining the game.");
-    }
+		e.getPlayer().kickPlayer("An unknown error occurred while joining the game.");
+	}
 }
