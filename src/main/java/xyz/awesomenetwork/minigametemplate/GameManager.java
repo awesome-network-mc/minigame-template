@@ -1,12 +1,27 @@
 package xyz.awesomenetwork.minigametemplate;
 
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import xyz.awesomenetwork.minigametemplate.combattag.CombatTagInfo;
+import xyz.awesomenetwork.minigametemplate.combattag.CombatTagUtil;
+import xyz.awesomenetwork.minigametemplate.enums.GameMetadata;
 import xyz.awesomenetwork.minigametemplate.enums.GameState;
+import xyz.awesomenetwork.minigametemplate.events.GameCountdownEvent;
 import xyz.awesomenetwork.minigametemplate.events.GameEndEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerDeathEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerJoinEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerLeaveEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerRespawnEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerSpectateEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerUnspectateEvent;
 import xyz.awesomenetwork.minigametemplate.events.GameRunningTimeEvent;
+import xyz.awesomenetwork.minigametemplate.events.GameStartEvent;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -16,6 +31,8 @@ public class GameManager {
 
     private final HashMap<Integer, String> COUNTDOWN_TITLE_NUMBERS = new HashMap<Integer, String>() {{
         put(60, "Starting in 60 seconds");
+        put(50, "Starting in 50 seconds");
+        put(40, "Starting in 40 seconds");
         put(30, "Starting in 30 seconds");
         put(20, "Starting in 20 seconds");
         put(10, "❿");
@@ -29,25 +46,39 @@ public class GameManager {
         put(2, ChatColor.DARK_AQUA + "❷");
         put(1, ChatColor.BLUE + "❶");
     }};
+    private final FixedMetadataValue playerDeathMetadata;
 
     private final JavaPlugin plugin;
     private final GameManagerOptions options;
+    private final CombatTagUtil combatTagUtil;
 
     private final HashSet<Player> inGamePlayers = new HashSet<>();
     private final HashSet<Player> spectatingPlayers = new HashSet<>();
 
     private GameState gameState = GameState.PREGAME;
     private final HashMap<GameState, Integer> repeatingTasks = new HashMap<>();
+    private final HashMap<Player, Integer> respawnTaskIds = new HashMap<>();
 
-    public GameManager(JavaPlugin plugin, GameManagerOptions options) {
+    private long gameStart = 0;
+    private long gameTimer = 0;
+
+    public GameManager(JavaPlugin plugin, GameManagerOptions options, CombatTagUtil combatTagUtil) {
         this.plugin = plugin;
         this.options = options;
+        this.combatTagUtil = combatTagUtil;
+
+        playerDeathMetadata = new FixedMetadataValue(plugin, 1);
 
         startReminderChatMessages();
     }
 
-    private void sendTitleToAllPlayers(String title) {
-        plugin.getServer().getOnlinePlayers().forEach(player -> player.sendTitle(title, "", 0, 25, 5));
+    private void setPlayerRespawnTask(Player player, int taskId) {
+        cancelPlayerRespawnTask(player);
+        respawnTaskIds.put(player, taskId);
+    }
+
+    private void cancelPlayerRespawnTask(Player player) {
+        respawnTaskIds.remove(player);
     }
 
     private boolean hasRepeatingTask(GameState gameState) {
@@ -79,19 +110,40 @@ public class GameManager {
         removePlayer(player);
 
         boolean addedToGame = inGamePlayers.add(player);
-        if (addedToGame) startGameCountdown();
+        if (addedToGame) {
+            plugin.getServer().getPluginManager().callEvent(new GamePlayerJoinEvent(player, inGamePlayers.size()));
+            player.setLevel(0);
+            player.setExp(0f);
+            startGameCountdown();
+        }
 
         return addedToGame;
     }
 
     public boolean setPlayerSpectating(Player player) {
         removePlayer(player);
-        return spectatingPlayers.add(player);
+        boolean spectating = spectatingPlayers.add(player);
+        if (spectating) plugin.getServer().getPluginManager().callEvent(new GamePlayerSpectateEvent(player, spectatingPlayers.size()));
+        return spectating;
     }
 
     public boolean removePlayer(Player player) {
-        if (inGamePlayers.remove(player)) return true;
-        if (spectatingPlayers.remove(player)) return true;
+        if (inGamePlayers.remove(player)) {
+            // Check whether player was in combat (only if the game is running, or else when the server stops it will kill people)
+            if (getGameState() == GameState.STARTED) {
+                CombatTagInfo combatTag = combatTagUtil.getPlayerCombatTag(player);
+                if (combatTag != null) {
+                    handlePlayerDeath(player);
+                }
+            }
+
+            plugin.getServer().getPluginManager().callEvent(new GamePlayerLeaveEvent(player, inGamePlayers.size()));
+            return true;
+        }
+        if (spectatingPlayers.remove(player)) {
+            plugin.getServer().getPluginManager().callEvent(new GamePlayerUnspectateEvent(player, spectatingPlayers.size()));
+            return true;
+        }
         return false;
     }
 
@@ -119,21 +171,34 @@ public class GameManager {
         setRepeatingTask(GameState.COUNTDOWN, plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             if (inGamePlayers.size() < options.minStartPlayers) {
                 cancelRepeatingTask(GameState.COUNTDOWN);
-                sendTitleToAllPlayers(MinigameTemplate.PREFIX_ERROR + "Not enough players to start");
+                for (Player player : plugin.getServer().getOnlinePlayers()) {
+                    player.setLevel(0);
+                    player.setExp(0f);
+                    player.sendTitle(MinigameTemplate.PREFIX_ERROR + "Not enough players to start", "", 0, 25, 5);
+                }
                 startReminderChatMessages();
                 return;
             }
 
             long timeRemaining = options.gameStartCountdownSeconds - (Instant.now().getEpochSecond() - countdownStart);
+            plugin.getServer().getPluginManager().callEvent(new GameCountdownEvent(timeRemaining));
+
+            final boolean showTitle = COUNTDOWN_TITLE_NUMBERS.containsKey((int) timeRemaining);
+            final float exp = 0.99f / options.gameStartCountdownSeconds * timeRemaining;
+            for (Player player : plugin.getServer().getOnlinePlayers()) {
+                player.setLevel((int) timeRemaining);
+                player.setExp(exp);
+
+                if (!showTitle) continue;
+                String title = COUNTDOWN_TITLE_NUMBERS.get((int) timeRemaining);
+                player.sendTitle(title, "", 0, 25, 5);
+            }
 
             if (timeRemaining <= 0) {
                 cancelRepeatingTask(GameState.COUNTDOWN);
                 startGame();
                 return;
             }
-            if (!COUNTDOWN_TITLE_NUMBERS.containsKey((int) timeRemaining)) return;
-
-            sendTitleToAllPlayers(COUNTDOWN_TITLE_NUMBERS.get((int) timeRemaining));
         }, 0, 20));
 
         return true;
@@ -142,7 +207,14 @@ public class GameManager {
     public void startGame() {
         gameState = GameState.STARTED;
 
-        long gameStart = Instant.now().getEpochSecond();
+        gameStart = Instant.now().getEpochSecond();
+
+        FixedMetadataValue lifeStartSecondsMetadata = new FixedMetadataValue(plugin, gameStart);
+        inGamePlayers.forEach(player -> {
+            player.setMetadata(GameMetadata.LIFE_START_SECONDS.name(), lifeStartSecondsMetadata);
+        });
+
+        plugin.getServer().getPluginManager().callEvent(new GameStartEvent());
 
         setRepeatingTask(GameState.STARTED, plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
             if (gameState == GameState.ENDED) {
@@ -150,8 +222,8 @@ public class GameManager {
                 return;
             }
 
-            long gameRunningTimeSeconds = Instant.now().getEpochSecond() - gameStart;
-            plugin.getServer().getPluginManager().callEvent(new GameRunningTimeEvent(gameRunningTimeSeconds));
+            gameTimer = Instant.now().getEpochSecond() - gameStart;
+            plugin.getServer().getPluginManager().callEvent(new GameRunningTimeEvent(gameTimer));
 
             if (inGamePlayers.size() < options.minStartPlayers) {
                 cancelRepeatingTask(GameState.STARTED);
@@ -160,7 +232,7 @@ public class GameManager {
             }
 
             if (options.maxGameTimeSeconds <= 0) return;
-            if (gameRunningTimeSeconds >= options.maxGameTimeSeconds) endGame();
+            if (gameTimer >= options.maxGameTimeSeconds) endGame();
         }, 0, 20));
     }
 
@@ -190,5 +262,96 @@ public class GameManager {
             }
 
         }, 0, 20));
+    }
+
+    public void handlePlayerDeath(Player player) {
+        if (player.hasMetadata(GameMetadata.PLAYER_DEATH.name())) return;
+        player.setMetadata(GameMetadata.PLAYER_DEATH.name(), playerDeathMetadata);
+
+        player.setHealth(20.0);
+
+        String title;
+        String deathMessage = null;
+        String victimName = ChatColor.WHITE + player.getName();
+        CombatTagInfo combatInfo = combatTagUtil.getPlayerCombatTag(player);
+        if (combatInfo != null) {
+            ChatColor heartColour = ChatColor.DARK_RED;
+            if (combatInfo.getHealth() >= 15) heartColour = ChatColor.GREEN;
+            else if (combatInfo.getHealth() >= 10) heartColour = ChatColor.GOLD;
+            else if (combatInfo.getHealth() >= 5) heartColour = ChatColor.RED;
+
+            String attackerName = ChatColor.WHITE + combatInfo.getUsername();
+            title = attackerName + " " + heartColour + (Math.round(combatInfo.getHealth() * 10.0) / 10) + "❤ " + ChatColor.RED + "killed you!";
+            deathMessage = ChatColor.RED + "✖ " + victimName + ChatColor.RED + " was killed by " + attackerName + " " + heartColour + (Math.round(combatInfo.getHealth() * 10.0) / 10) + "❤";
+        } else {
+            title = ChatColor.RED + "You died!";
+            deathMessage = ChatColor.RED + "✖ " + victimName + ChatColor.RED + " died";
+        }
+
+        if (options.dropItemsOnDeath) {
+            World world = player.getWorld();
+            Location location = player.getLocation();
+            for (ItemStack item : player.getInventory().getContents()) {
+                if (item == null) continue;
+                world.dropItemNaturally(location, item);
+            }
+        }
+
+        GamePlayerDeathEvent deathEvent = new GamePlayerDeathEvent(player, deathMessage, combatInfo);
+        plugin.getServer().getPluginManager().callEvent(deathEvent);
+        
+        if (options.displayDeathMessages && deathEvent.hasDeathMessage()) plugin.getServer().broadcastMessage(deathEvent.getDeathMessage());
+
+        if (options.autoRespawn) {
+            long timerStart = Instant.now().getEpochSecond();
+
+            setPlayerRespawnTask(player, plugin.getServer().getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+                long secondsRemaining = options.autoRespawnTimerSeconds - (Instant.now().getEpochSecond() - timerStart);
+
+                if (getGameState() == GameState.ENDED) {
+                    cancelPlayerRespawnTask(player);
+                    return;
+                }
+
+                if (secondsRemaining == 0) {
+                    player.removeMetadata(GameMetadata.PLAYER_DEATH.name(), plugin);
+                    plugin.getServer().getPluginManager().callEvent(new GamePlayerRespawnEvent(player));
+                    cancelPlayerRespawnTask(player);
+                    return;
+                }
+
+                String subtitle = ChatColor.GRAY + "Respawning in " + secondsRemaining;
+                player.sendTitle(title, subtitle, 0, 30, 10);
+            }, 0, 20));
+        } else {
+            long seconds = Instant.now().getEpochSecond() - player.getMetadata(GameMetadata.LIFE_START_SECONDS.name()).get(0).asLong();
+            long hours = seconds / 3600;
+            seconds -= hours * 3600;
+            long minutes = seconds / 60;
+            seconds -= minutes * 60;
+
+            String aliveTime = "";
+            if (hours > 0) aliveTime += hours + "h ";
+            if (minutes > 0) aliveTime += minutes + "m ";
+             if (seconds > 0) aliveTime += seconds + "s";
+
+             player.sendTitle(title, ChatColor.GRAY + "Your life lasted " + aliveTime, 10, 100, 10);
+
+            if (options.autoSpectateOnDeath) {
+                setPlayerSpectating(player);
+            }
+        }
+    }
+
+    public long getGameRunningTimeInSeconds() {
+        return gameTimer;
+    }
+
+    public HashSet<Player> getIngamePlayers() {
+        return this.inGamePlayers;
+    }
+
+    public HashSet<Player> getSpectatingPlayers() {
+        return this.spectatingPlayers;
     }
 }

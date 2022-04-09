@@ -8,8 +8,9 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import xyz.awesomenetwork.minigametemplate.combattag.CombatTagInfo;
 import xyz.awesomenetwork.minigametemplate.enums.GameMetadata;
-import xyz.awesomenetwork.minigametemplate.events.GamePlayerDamageEvent;
+import xyz.awesomenetwork.minigametemplate.events.GamePlayerPvpDamageEvent;
 
 public class EntityDamageByEntityListener implements Listener {
     private final JavaPlugin plugin;
@@ -17,7 +18,7 @@ public class EntityDamageByEntityListener implements Listener {
     public EntityDamageByEntityListener(JavaPlugin plugin) {
         this.plugin = plugin;
     }
-
+    
     @EventHandler
     public void entityDamageByEntity(EntityDamageByEntityEvent e) {
         if (!(e.getEntity() instanceof Player)) return;
@@ -32,19 +33,15 @@ public class EntityDamageByEntityListener implements Listener {
 
         if (attacker == null) return;
 
-        GamePlayerDamageEvent event = new GamePlayerDamageEvent(attacker, victim, e.getDamage());
+        GamePlayerPvpDamageEvent event = new GamePlayerPvpDamageEvent(attacker, victim, e.getDamage());
         plugin.getServer().getPluginManager().callEvent(event);
         e.setCancelled(event.isCancelled());
         if (event.isCancelled()) return;
 
-        FixedMetadataValue combatStartTime = new FixedMetadataValue(plugin, System.currentTimeMillis());
+        CombatTagInfo attackerCombatTag = new CombatTagInfo(victim.getWorld(), victim.getUniqueId(), victim.getName(), victim.getHealth());
+        attacker.setMetadata(GameMetadata.COMBAT_TAG.name(), new FixedMetadataValue(plugin, attackerCombatTag));
 
-        attacker.setMetadata(GameMetadata.COMBAT_LAST_TAG_MILLIS.name(), combatStartTime);
-        attacker.setMetadata(GameMetadata.COMBAT_TAGGER_UUID.name(), new FixedMetadataValue(plugin, victim.getUniqueId()));
-        attacker.setMetadata(GameMetadata.COMBAT_TAGGER_HEALTH.name(), new FixedMetadataValue(plugin, victim.getHealth()));
-
-        victim.setMetadata(GameMetadata.COMBAT_TAGGER_HEALTH.name(), combatStartTime);
-        victim.setMetadata(GameMetadata.COMBAT_TAGGER_UUID.name(), new FixedMetadataValue(plugin, attacker.getUniqueId()));
-        victim.setMetadata(GameMetadata.COMBAT_TAGGER_HEALTH.name(), new FixedMetadataValue(plugin, attacker.getHealth()));
+        CombatTagInfo victimCombatTag = new CombatTagInfo(attacker.getWorld(), attacker.getUniqueId(), attacker.getName(), attacker.getHealth());
+        victim.setMetadata(GameMetadata.COMBAT_TAG.name(), new FixedMetadataValue(plugin, victimCombatTag));
     }
 }

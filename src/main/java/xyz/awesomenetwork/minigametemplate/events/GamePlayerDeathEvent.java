@@ -1,39 +1,63 @@
 package xyz.awesomenetwork.minigametemplate.events;
 
-import org.bukkit.OfflinePlayer;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+
+import xyz.awesomenetwork.minigametemplate.combattag.CombatTagInfo;
 
 public class GamePlayerDeathEvent extends BaseEvent {
-
     private final Player victim;
-    private final OfflinePlayer attacker;
-    private final double attackerHealth;
+    private final CombatTagInfo combatTag;
 
-    public GamePlayerDeathEvent(Player victim) {
-        this.victim = victim;
-        attacker = null;
-        attackerHealth = 0.0;
+    private String deathMessage = "";
+    private List<ItemStack> victimDrops = new ArrayList<>();
+
+    public GamePlayerDeathEvent(Player victim, String deathMessage) {
+        this(victim, deathMessage, null);
     }
 
-    public GamePlayerDeathEvent(Player victim, OfflinePlayer attacker, double attackerHealth) {
-        this.attacker = attacker;
-        this.attackerHealth = attackerHealth;
+    public GamePlayerDeathEvent(Player victim, String deathMessage, CombatTagInfo combatTag) {
         this.victim = victim;
+        this.deathMessage = deathMessage;
+        this.combatTag = combatTag;
+
+        for (ItemStack item : victim.getInventory().getContents()) {
+            if (item != null) victimDrops.add(item);
+        }
     }
 
     public Player getVictim() {
         return victim;
     }
 
-    public boolean isSuicide() {
-        return attacker == null;
+    public boolean hasCombatTag() {
+        return combatTag != null;
     }
 
-    public OfflinePlayer getAttacker() {
-        return attacker;
+    public CombatTagInfo getCombatTagInfo() {
+        return combatTag;
     }
 
-    public double getAttackerHealth() {
-        return attackerHealth;
+    public List<ItemStack> getVictimItemDrops() {
+        return victimDrops;
+    }
+
+    public void setVictimItemDrops(List<ItemStack> victimDrops) {
+        this.victimDrops = victimDrops;
+    }
+
+    public boolean hasDeathMessage() {
+        return deathMessage != null;
+    }
+
+    public String getDeathMessage() {
+        return deathMessage;
+    }
+
+    public void setDeathMessage(String deathMessage) {
+        this.deathMessage = deathMessage;
     }
 }
