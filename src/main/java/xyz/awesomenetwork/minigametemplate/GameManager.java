@@ -26,10 +26,12 @@ import xyz.awesomenetwork.minigametemplate.events.GameStartEvent;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class GameManager {
 
-    private final HashMap<Integer, String> COUNTDOWN_TITLE_NUMBERS = new HashMap<Integer, String>() {{
+    private final Map<Integer, String> COUNTDOWN_TITLE_NUMBERS = new HashMap<Integer, String>() {{
         put(60, "Starting in 60 seconds");
         put(50, "Starting in 50 seconds");
         put(40, "Starting in 40 seconds");
@@ -52,12 +54,12 @@ public class GameManager {
     private final GameManagerOptions options;
     private final CombatTagUtil combatTagUtil;
 
-    private final HashSet<Player> inGamePlayers = new HashSet<>();
-    private final HashSet<Player> spectatingPlayers = new HashSet<>();
+    private final Set<Player> inGamePlayers = new HashSet<>();
+    private final Set<Player> spectatingPlayers = new HashSet<>();
 
     private GameState gameState = GameState.PREGAME;
-    private final HashMap<GameState, Integer> repeatingTasks = new HashMap<>();
-    private final HashMap<Player, Integer> respawnTaskIds = new HashMap<>();
+    private final Map<GameState, Integer> repeatingTasks = new HashMap<>();
+    private final Map<Player, Integer> respawnTaskIds = new HashMap<>();
 
     private long gameStart = 0;
     private long gameTimer = 0;
@@ -347,11 +349,11 @@ public class GameManager {
         return gameTimer;
     }
 
-    public HashSet<Player> getIngamePlayers() {
+    public Set<Player> getIngamePlayers() {
         return this.inGamePlayers;
     }
 
-    public HashSet<Player> getSpectatingPlayers() {
+    public Set<Player> getSpectatingPlayers() {
         return this.spectatingPlayers;
     }
 }
