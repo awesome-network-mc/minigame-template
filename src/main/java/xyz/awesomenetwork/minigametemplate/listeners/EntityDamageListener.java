@@ -9,25 +9,25 @@ import xyz.awesomenetwork.minigametemplate.GameManager;
 import xyz.awesomenetwork.minigametemplate.enums.GameState;
 
 public class EntityDamageListener implements Listener {
-    private final GameManager gameManager;
+	private final GameManager gameManager;
 
-    public EntityDamageListener(GameManager gameManager) {
-        this.gameManager = gameManager;
-    }
+	public EntityDamageListener(GameManager gameManager) {
+		this.gameManager = gameManager;
+	}
 
-    @EventHandler
-    public void entityDamage(EntityDamageEvent e) {
-        if (gameManager.getGameState() != GameState.STARTED) e.setCancelled(true);
-        if (!(e.getEntity() instanceof Player)) return;
-        if (e.isCancelled()) return;
+	@EventHandler
+	public void entityDamage(EntityDamageEvent e) {
+		if (gameManager.getGameState() != GameState.STARTED) e.setCancelled(true);
+		if (!(e.getEntity() instanceof Player)) return;
+		if (e.isCancelled()) return;
 
-        // Get victim player
-        Player victim = (Player) e.getEntity();
+		// Get victim player
+		Player victim = (Player) e.getEntity();
 
-        // Is victim dead?
-        if (victim.getHealth() - e.getFinalDamage() > 0.0) return;
+		// Is victim dead?
+		if (victim.getHealth() - e.getFinalDamage() > 0.0) return;
 
-        e.setCancelled(true);
-        gameManager.handlePlayerDeath(victim);
-    }
+		e.setCancelled(true);
+		gameManager.handlePlayerDeath(victim);
+	}
 }

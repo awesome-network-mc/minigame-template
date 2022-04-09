@@ -10,32 +10,32 @@ import xyz.awesomenetwork.minigametemplate.listeners.*;
 
 public class MinigameTemplate extends JavaPlugin {
 
-    public static final String PREFIX_INFO = ChatColor.GOLD + "● " + ChatColor.YELLOW;
-    public static final String PREFIX_ERROR = ChatColor.DARK_RED + "● " + ChatColor.RED;
+	public static final String PREFIX_INFO = ChatColor.GOLD + "● " + ChatColor.YELLOW;
+	public static final String PREFIX_ERROR = ChatColor.DARK_RED + "● " + ChatColor.RED;
 
-    private boolean reloadDetector = false;
+	private boolean reloadDetector = false;
 
-    public void onEnable() {
-        if (reloadDetector) {
-            getLogger().info("can u not reload thx");
-            return;
-        }
-        reloadDetector = true;
+	public void onEnable() {
+		if (reloadDetector) {
+			getLogger().info("can u not reload thx");
+			return;
+		}
+		reloadDetector = true;
 
-        getServer().getServicesManager().register(MinigameTemplate.class, this, this, ServicePriority.Normal);
-    }
+		getServer().getServicesManager().register(MinigameTemplate.class, this, this, ServicePriority.Normal);
+	}
 
-    public GameManager createGameManager(GameManagerOptions options) {
-        CombatTagUtil combatTagUtil = new CombatTagUtil(options.combatTagTimeTicks);
-        GameManager gameManager = new GameManager(this, options, combatTagUtil);
+	public GameManager createGameManager(GameManagerOptions options) {
+		CombatTagUtil combatTagUtil = new CombatTagUtil(options.combatTagTimeTicks);
+		GameManager gameManager = new GameManager(this, options, combatTagUtil);
 
-        final PluginManager pm = getServer().getPluginManager();
+		final PluginManager pm = getServer().getPluginManager();
 
-        pm.registerEvents(new EntityDamageByEntityListener(this), this);
-        pm.registerEvents(new EntityDamageListener(gameManager), this);
-        pm.registerEvents(new PlayerJoinListener(gameManager), this);
-        pm.registerEvents(new PlayerQuitListener(gameManager), this);
+		pm.registerEvents(new EntityDamageByEntityListener(this), this);
+		pm.registerEvents(new EntityDamageListener(gameManager), this);
+		pm.registerEvents(new PlayerJoinListener(gameManager), this);
+		pm.registerEvents(new PlayerQuitListener(gameManager), this);
 
-        return gameManager;
-    }
+		return gameManager;
+	}
 }
